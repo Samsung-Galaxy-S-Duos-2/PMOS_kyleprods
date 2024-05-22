@@ -1,0 +1,79 @@
+# Reference: <https://postmarketos.org/vendorkernel>
+# Kernel config based on: arch/arm/configs/bcm21664_hawaii_ss_kylepro_rev00_lineage_defconfig
+
+pkgname=linux-samsung-kyleproxx
+pkgver=3.4.113
+pkgrel=1
+pkgdesc="Kernel fork for Samsung Galaxy Trend & Samsung Galaxy S Duos 2"
+arch="armv7"
+_carch="arm"
+_flavor="samsung-kyleproxx"
+url="https://kernel.org"
+license="GPL-2.0-only"
+options="!strip !check !tracedeps pmb:cross-native"
+makedepends="perl sed installkernel bash gmp-dev bc linux-headers elfutils-dev devicepkg-dev gcc6 xz"
+
+# Compiler: GCC 6 (doesn't boot when compiled with newer versions)
+if [ "${CC:0:5}" != "gcc6-" ]; then
+	CC="gcc6-$CC"
+	HOSTCC="gcc6-gcc"
+	CROSS_COMPILE="gcc6-$CROSS_COMPILE"
+fi
+
+# Source
+_repository="kernel_samsung_kyleproxx"
+_commit="026cf3b3e97ec40aa1c0c52837a318725786f05a"
+_config="config-$_flavor.$arch"
+source="
+	$pkgname-$_commit.tar.gz::https://github.com/Samsung-Galaxy-S-Duos-2/$_repository/archive/$_commit.tar.gz
+	$_config
+	return_address.patch
+	screen_reset.patch
+	gcc7-give-up-on-ilog2-const-optimizations.patch
+	gcc8-fix-put-user.patch
+	gcc10-extern_YYLOC_global_declaration.patch
+	fix-build-with-binutils-2.41.patch
+	kernel-use-the-gnu89-standard-explicitly.patch
+	linux3.4-ARM-8933-1-replace-Sun-Solaris-style-flag-on-section.patch
+"
+builddir="$srcdir/$_repository-$_commit"
+
+prepare() {
+	default_prepare
+	. downstreamkernel_prepare
+}
+
+build() {
+	unset LDFLAGS
+	make ARCH="$_carch" CC="${CC:-gcc}" \
+		KBUILD_BUILD_VERSION="$((pkgrel + 1 ))-postmarketOS"
+
+	# the 'no-pic' flag is necessary to avoid the
+	# error 'Unknown symbol _GLOBAL_OFFSET_TABLE_ (err 0)' when loading the module
+	make ARCH="$_carch" CC="${CC:-gcc}" CFLAGS_MODULE="-fno-pic" \
+		KBUILD_BUILD_VERSION="$((pkgrel + 1))-postmarketOS" modules
+}
+
+package() {
+	downstreamkernel_package "$builddir" "$pkgdir" "$_carch" "$_flavor"
+
+	# Modules
+	unset LDFLAGS
+	make ARCH="$_carch" CC="${CC:-gcc}" \
+		KBUILD_BUILD_VERSION="$((pkgrel + 1))-postmarketOS" \
+		INSTALL_MOD_PATH="$pkgdir" INSTALL_MOD_STRIP=1 \
+		modules_install
+}
+
+sha512sums="
+2e45c503b4c01de5b0b4dc0f5a186993ab32fec07e49764e763c4e7e0f06dfbb181dc0e4366f7df4fb4ff1aa23f21f0a541d168d0bf91a9d97bc693357eb932f  linux-samsung-kyleproxx-026cf3b3e97ec40aa1c0c52837a318725786f05a.tar.gz
+9ea00e20f766683c7675357ae67f5ad2ee9715d21ee85fc15bb0253209ba2b9d0c1b6784085a942df1feea2aca40f2bb7e4f141ba4e9870bedf21010fab952bb  config-samsung-kyleproxx.armv7
+c40eaa11547f5bc2b1ff965506bdfe3015ff16e4b5ad9ccb3b8134ceafd1d32407c4ef2b213e02e036ce1e9bdcbfe768dff7d4b054bec77705a176c1f783b6f5  return_address.patch
+c0a59be648ef646650c83b5d135daa05aae300c7ad5056d49f1b3f9967c4d7f337b0ddb8ae319b11e43c17aaf5fc9dcc9724463d265c1d765dc85c86f612f4ea  screen_reset.patch
+77eba606a71eafb36c32e9c5fe5e77f5e4746caac292440d9fb720763d766074a964db1c12bc76fe583c5d1a5c864219c59941f5e53adad182dbc70bf2bc14a7  gcc7-give-up-on-ilog2-const-optimizations.patch
+197d40a214ada87fcb2dfc0ae4911704b9a93354b75179cd6b4aadbb627a37ec262cf516921c84a8b1806809b70a7b440cdc8310a4a55fca5d2c0baa988e3967  gcc8-fix-put-user.patch
+2b48f1bf0e3f70703d2cdafc47d5e615cc7c56c70bec56b2e3297d3fa4a7a1321d649a8679614553dde8fe52ff1051dae38d5990e3744c9ca986d92187dcdbeb  gcc10-extern_YYLOC_global_declaration.patch
+5d7714f1b86837b8a33cdb201dd7199baa1047a828d8ebebe9f3bf57f458f212cbd31a2d035c88835ef5e3e08992f8e68f6e4fd1a993cd6ea1e0b5461ed8d5f1  fix-build-with-binutils-2.41.patch
+ad0182a483791fc88e058838bc331b2f04a75ba291e763767babdb815efadfc3b4fda97e69e2e3f00a426cabea088e35297a92bd287592597d1e309be68ee92c  kernel-use-the-gnu89-standard-explicitly.patch
+b14c0033045dd1ec5dd03612d8fb6361c4a0fa3eb54f7e262628d18756456c2e569a437d1b35099a8302577d1e471bbf9222b4b1b30f6578af7e4342a0009815  linux3.4-ARM-8933-1-replace-Sun-Solaris-style-flag-on-section.patch
+"

@@ -1,0 +1,33 @@
+# Reference: <https://postmarketos.org/devicepkg>
+pkgname=device-samsung-kyleprods
+pkgdesc="Samsung Galaxy S Duos 2"
+pkgver=1
+pkgrel=0
+url="https://postmarketos.org"
+license="MIT"
+arch="armv7"
+options="!check !archcheck"
+depends="postmarketos-base postmarketos-base-downstream linux-samsung-kyleproxx mkbootimg msm-fb-refresher mesa-dri-gallium"
+makedepends="devicepkg-dev"
+subpackages="$pkgname-nonfree-firmware:nonfree_firmware"
+source="deviceinfo modules-load.conf initfs-hook.sh"
+
+build() {
+	devicepkg_build $startdir $pkgname
+}
+
+package() {
+	devicepkg_package $startdir $pkgname
+}
+
+nonfree_firmware() {
+	pkgdesc="Wifi firmware"
+	depends="firmware-samsung-kyleproxx"
+	mkdir "$subpkgdir"
+}
+
+sha512sums="
+5ad0ab1bc6dd31902108eb1ec472e689de56d47a31c192b542bcc269842d273b3ca495415844411e6775e3eeac78ef64cfcc33cc11787d7998e8935818a90c50  deviceinfo
+3a14d69b7c4b85b4b5edd0043366d1d57daf15abd86680e99936857ad2c40551ff70dfe2d287f32f71ac2ed57bf45f775d60b7891453ca74e27de1b5a9e89675  modules-load.conf
+b9632705bcf48af3ac148a39d2fbabfe3c2b9c3c23191492056ec7ce8e0f545836538d7fe667bee7e5edf27927aaf5b584acfa0737a01faa7b9dabda6fa32c24  initfs-hook.sh
+"

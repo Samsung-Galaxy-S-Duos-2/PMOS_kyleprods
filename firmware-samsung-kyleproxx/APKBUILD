@@ -1,0 +1,23 @@
+pkgname=firmware-samsung-kyleproxx
+pkgver=1
+pkgrel=0
+_commit="4799f40529ac120bac3e7986e87aca33066f33a4"
+pkgdesc="Samsung Galaxy Trend Plus & Samsung Galaxy S Duos 2 Firmware"
+url="https://github.com/Samsung-Galaxy-S-Duos-2/vendor_samsung_kyleproxx"
+arch="armv7"
+license="proprietary"
+source="$pkgname-$_commit.tar.gz::https://github.com/Samsung-Galaxy-S-Duos-2/vendor_samsung_kyleproxx/archive/$_commit.tar.gz"
+options="!check !strip !archcheck !spdx !tracedeps pmb:cross-native"
+builddir="$srcdir/vendor_samsung_kyleproxx-$_commit"
+
+package() {
+	# Wifi
+	for _i in bcmdhd_sta.bin nvram_net.txt; do
+		install -Dm644 proprietary/etc/wifi/"$_i" \
+		"$pkgdir"/lib/firmware/postmarketos/"$_i"
+	done
+}
+
+sha512sums="
+28f4e93323fd76bf302ca16a37433ab7a505a3b104cad5b7a9a0a62c5dafc94bf08236613cd6c775f674e2045d8f2a48cec9560be5aeeeac19438bf4477a06d0  firmware-samsung-kyleproxx-4799f40529ac120bac3e7986e87aca33066f33a4.tar.gz
+"
